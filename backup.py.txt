@@ -1,0 +1,36 @@
+import os
+import requests
+
+# ===== CONFIG =====
+FILELU_USERNAME = "akshes"   # <-- Replace with your FileLu username
+FILELU_PASSWORD = "Eduardo469"   # <-- Replace with your FileLu password
+LOCAL_FOLDER = "test_backup"        # The folder you created
+REMOTE_FOLDER = "backup"            # Folder in FileLu to upload files into
+
+# FileLu WebDAV URL
+BASE_URL = f"https://webdav.filelu.com/{REMOTE_FOLDER}/"
+
+def upload_file(local_path, remote_name):
+    url = BASE_URL + remote_name
+    with open(local_path, "rb") as f:
+        response = requests.put(url, data=f, auth=(FILELU_USERNAME, FILELU_PASSWORD))
+    if response.status_code in [200, 201, 204]:
+        print(f"[✔] Uploaded: {remote_name}")
+    else:
+        print(f"[✖] Failed: {remote_name} ({response.status_code})")
+
+def backup_folder():
+    if not os.path.exists(LOCAL_FOLDER):
+        print("Folder not found.")
+        return
+    for root, dirs, files in os.walk(LOCAL_FOLDER):
+        for file in files:
+            full_path = os.path.join(root, file)
+            relative_path = os.path.relpath(full_path, LOCAL_FOLDER)
+            remote_name = relative_path.replace("\\", "/")
+            upload_file(full_path, remote_name)
+
+if __name__ == "__main__":
+    print("Uploading files to FileLu via WebDAV...")
+    backup_folder()
+    print("Backup complete.")
